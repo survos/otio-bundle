@@ -1,0 +1,32 @@
+{
+    "name": "survos/otio-bundle",
+    "description": "Symfony integration scaffold for the Survos OpenTimelineIO library.",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "keywords": [
+        "symfony",
+        "otio",
+        "opentimelineio"
+    ],
+    "require": {
+        "php": "^8.5",
+        "survos/kit-bundle": "^2.36",
+        "survos/otio": "dev-main",
+        "symfony/config": "^8.1",
+        "symfony/dependency-injection": "^8.1",
+        "symfony/http-kernel": "^8.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Survos\\OtioBundle\\": "src/"
+        }
+    },
+    "extra": {
+        "symfony": {
+            "bundle": "Survos\\OtioBundle\\SurvosOtioBundle"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
