@@ -1,0 +1,29 @@
+{
+  "name": "@survos/otio-bundle",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "license": "SEE LICENSE IN ../LICENSE",
+  "scripts": {
+    "build": "esbuild src/player.tsx --bundle --format=esm --minify --legal-comments=linked --define:process.env.NODE_ENV=\\\"production\\\" --outfile=dist/player.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/player": "4.0.534",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "remotion": "4.0.534"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "esbuild": "0.28.2",
+    "typescript": "7.0.2"
+  },
+  "symfony": {
+    "controllers": {},
+    "importmap": {
+      "@survos/otio-bundle/player": "path:%PACKAGE%/dist/player.js"
+    }
+  }
+}

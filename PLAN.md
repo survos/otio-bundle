@@ -1,15 +1,12 @@
-# Plan
+# Viewer plan
 
-- [x] Declare PHP/Symfony, kit and core library dependencies.
-- [x] Add a kit-based concrete bundle, RequiredBundle attribute and Flex discovery marker.
-- [x] Register `bu/otio-bundle` in mono's split workflow with the package files.
-- [ ] Publish both split repositories on GitHub and verify their Composer files.
-- [ ] User registers the core and bundle on Packagist.
-- [ ] Implement and test the core cut/gap/trim reader and projection first.
-- [ ] Add cohesive method-level `otio:validate`, `otio:inspect`, `otio:project` commands and resolver wiring.
-- [ ] Add Twig/Remotion UX integration using AbstractUxBundle and matching Composer/asset names.
-- [ ] Create `otio-demo` only after the publication/registration prerequisite is met.
-- [ ] Verify a real sample's playback and seeking, then add platform evidence retrieval.
-- [ ] Replace the bootstrap `dev-main` core constraint with a tagged constraint before a stable release.
+- [x] Publish scaffold and register on Packagist.
+- [x] Project OTIO cut/gap/trim timing into Remotion playback data.
+- [x] Ship prebuilt React/Remotion ESM through AbstractUxBundle and AssetMapper.
+- [x] Play photos, audio and source video with deterministic motion and lower thirds.
+- [ ] Verify clean installation from the next published release; use mono/link for this development baseline.
+- [ ] Broaden semantic fixtures and browser coverage before expanding supported effects.
+- [ ] Add optional render/export integration if preview use demonstrates a need.
 
-The detailed supported subset, source-retrieval architecture, platform conventions and acceptance criteria live with [survos/otio](https://github.com/survos/otio/blob/main/PLAN.md). Avoid duplicating timing logic or maintaining a second media catalog here.
+Gallery, URL/file opening, Folio APIs, PWA and source selection remain application
+responsibilities. PWA activation and browser-media caching are currently deferred.

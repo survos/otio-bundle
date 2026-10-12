@@ -1,41 +1,68 @@
 # Survos OTIO Bundle
 
-Thin Symfony integration for [survos/otio](https://github.com/survos/otio).
-
-**Status: development scaffold.** The bundle class and Composer wiring exist. No OTIO commands, Twig player, React assets, configuration options or media resolvers are implemented yet. Publishing the repository allows Packagist registration before building the demo; it does not constitute a functional player release.
-
-Requires PHP 8.5+, Symfony 8.1+ and `survos/kit-bundle` ^2.36. The core library is currently required as `dev-main`; replace that with a compatible tagged constraint for the first release.
-
-## Installation after Packagist registration
-
-Register `survos/otio` first, then this package. Until both have stable tags, explicitly opt in to both development packages in the consuming app:
+Symfony integration that converts OTIO documents into a Remotion browser preview.
+The standalone `survos/otio` package owns OTIO classes; this bundle owns playback.
 
 ```bash
-composer require survos/otio-bundle:dev-main survos/otio:dev-main
+composer require survos/otio-bundle survos/otio:dev-main
 ```
 
-Symfony Flex should register the bundles. Without Flex, add these entries to `config/bundles.php`:
+The current implementation is in mono development sources; the published 2.36.5
+release is the original scaffold. Link the consumer with `php ../mono/link .`
+until the next release publishes these changes.
 
-```php
-Survos\Kit\SurvosKitBundle::class => ['all' => true],
-Survos\OtioBundle\SurvosOtioBundle::class => ['all' => true],
+The bundle ships a prebuilt ESM player containing React and Remotion. Consumers
+use Symfony AssetMapper, without adding a React build to their application:
+
+```js
+import {mountOtioPlayer} from '@survos/otio-bundle/player';
+const player = mountOtioPlayer(document.getElementById('player'), projection);
 ```
 
-Use the existing `monolink` workflow for local source development. Do not add Composer path repositories or edit vendor files.
-
-## Responsibilities
-
-This package will wire the standalone library into Symfony, expose method-level console commands and host the player as a Twig/React island. Timing/parsing stay in the library; source retrieval, credentials and story orchestration stay in the application/integration layer.
-
-The initial class extends kit's `AbstractSurvosBundle` because it ships no UX assets. When the player is added, switch to `AbstractUxBundle` and introduce the required `symfony-ux` keyword, `@survos/otio-bundle` assets/package.json and kit Stimulus helpers together. Preserve the Flex marker and required kit bundle declaration.
-
-See [PLAN.md](PLAN.md) and the [core design docs](https://github.com/survos/otio/tree/main/docs). Do not start `otio-demo` until both repositories are published and registered on Packagist.
-
-## Validation
+The UX package metadata registers that import through Flex. In a linked consumer
+installed before this metadata existed, register it once:
 
 ```bash
-composer validate --strict
-php -l src/SurvosOtioBundle.php
+php bin/console importmap:require @survos/otio-bundle/player --path=./vendor/survos/otio-bundle/assets/dist/player.js
 ```
 
-MIT; see [LICENSE](LICENSE).
+Inject `Survos\OtioBundle\Playback\RemotionProjector` and call
+`project($timeline, $resolve)`. The resolver receives an ExternalReference target
+and returns `id`, `url`, `kind` (image/audio/video), and optional `credit`.
+The application is responsible for authorization, source metadata and URL resolution.
+
+## Supported preview
+
+Flat video/audio tracks, explicit clip trims, gaps, layered visuals, images,
+original audio and video, optional Ken Burns motion and lower thirds. Absolute
+boundaries are rounded to output frames; source trims remain separate. Video
+sound is opt-in to avoid doubling a separate audio track. Nested/trimmed
+compositions, effects/retiming, transitions and unsupported references fail explicitly.
+The preview uses native HTML media through Remotion for browser compatibility.
+MP4 export is not implemented here.
+
+`metadata.survos` is an optional presentation profile, version 1. Timeline fields:
+`fps` (default 30), `width` (1920), `height` (1080), plus optional
+`fadeInSeconds` and `fadeOutSeconds` (0–10, default 0). These apply a synchronized
+picture-to-black and audio-to-silence envelope across the whole composition,
+including overlays and embedded video sound; seeking recomputes it from frame time. Clip fields: `layout`
+(`editorial` or `lower-third`), `caption`, `eyebrow`, `gain`, `embeddedAudio`, and
+`motion` (`fromScale`, `toScale`, `fromX`, `toX`, `fromY`, `toY`). Motion positions
+are percentages; scale is 1–3. These are custom renderer hints, not standard OTIO
+features that another editor must reproduce.
+
+The player exposes play, pause, seekTo, getCurrentFrame, setMotion, setCaptions,
+and unmount; it emits otio:frame, otio:play and otio:pause DOM events.
+
+## Development
+
+```bash
+cd assets
+npm ci
+npm run typecheck
+npm run build
+```
+
+Commit dist with source so Composer consumers do not need npm. Upstream notices
+are shipped beside the build. React and Remotion retain their own licenses;
+review Remotion's license for your intended usage. Our original code is MIT.
