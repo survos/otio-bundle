@@ -27,6 +27,9 @@ function Visual({clip, fps, motion, captions, level}: {clip: PlaybackClip; fps: 
   const title = clip.layout === 'title';
   const credits = clip.layout === 'credits';
   const entrance = motion ? spring({frame: Math.max(0,frame - 8), fps, config:{damping:200}}) : 1;
+  // A lower third identifies the scene, then gets out of the way (about five seconds).
+  const lowerHold = Math.min(clip.durationFrames, Math.round(fps * 5.5));
+  const lowerExit = interpolate(frame, [lowerHold - 12, lowerHold], [1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
   const imageStyle: React.CSSProperties = {width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${x}% ${y}%`, transform: `scale(${scale})`, transformOrigin: `${x}% ${y}%`};
   return <AbsoluteFill style={{background: 'transparent', opacity, overflow: 'hidden'}}>
     {clip.kind === 'image'
@@ -53,19 +56,21 @@ function Visual({clip, fps, motion, captions, level}: {clip: PlaybackClip; fps: 
       <div style={{width:64,height:3,background:'#d9b071',margin:'30px auto'}}/>
       {captions && <div style={{fontSize:26,lineHeight:1.45,maxWidth:880,color:'#e5dfd5'}}>{clip.caption}</div>}
     </AbsoluteFill>
-    </> : lower ? <div data-otio-lower-third style={{position:'absolute',left:54,bottom:64,maxWidth:900,transform:`translateX(${(1-entrance)*-50}px)`,opacity:entrance,color:'#fffaf1',background:'rgba(12,25,25,.88)',borderLeft:'5px solid #d9b071',padding:'22px 30px'}}>
-      <div style={{fontSize:16,letterSpacing:3,textTransform:'uppercase',color:'#d9b071',marginBottom:10}}>{clip.eyebrow}</div>
-      <div style={{fontFamily:'Georgia,serif',fontSize:42,lineHeight:1.1}}>{clip.name}</div>
-      {captions && <div style={{fontSize:20,marginTop:12,lineHeight:1.4}}>{clip.caption}</div>}
+    </> : lower ? <div data-otio-lower-third style={{position:'absolute',left:54,bottom:150,maxWidth:900,transform:`translateX(${(1-entrance)*-50}px)`,opacity:entrance*lowerExit,color:'#fffaf1',background:'rgba(12,25,25,.88)',borderLeft:'5px solid #d9b071',padding:'18px 28px'}}>
+      {clip.eyebrow && <div style={{fontSize:16,letterSpacing:3,textTransform:'uppercase',color:'#d9b071',marginBottom:8}}>{clip.eyebrow}</div>}
+      <div style={{fontFamily:'Georgia,serif',fontSize:40,lineHeight:1.1}}>{clip.name}</div>
     </div> : <>
-    <AbsoluteFill style={{background: 'linear-gradient(180deg, rgba(4,9,15,.18), transparent 36%, rgba(4,9,15,.9))', pointerEvents: 'none'}}/>
+    <AbsoluteFill style={{background: 'linear-gradient(180deg, rgba(4,9,15,.18), transparent 36%, rgba(4,9,15,.75))', pointerEvents: 'none'}}/>
     {clip.eyebrow && <div data-otio-eyebrow style={{position:'absolute',top:40,right:48,maxWidth:640,textAlign:'right',color:'#f6ede0',fontSize:18,fontWeight:600,letterSpacing:2,textShadow:'0 1px 4px rgba(0,0,0,.85)'}}>{clip.eyebrow}</div>}
-    <div style={{position:'absolute',bottom:96,left:60,right:60,color:'#fffaf1'}}>
+    <div style={{position:'absolute',bottom:150,left:60,right:60,color:'#fffaf1'}}>
       <div style={{width:42,height:3,background:'#d9b071',marginBottom:22}}/>
-      <h2 style={{color:'#fffaf1',fontFamily:'Georgia, serif',fontWeight:400,fontSize:66,lineHeight:1.03,margin:'0 0 20px',maxWidth:950}}>{clip.name}</h2>
-      {captions && <p data-otio-subtitle style={{fontSize:28,lineHeight:1.4,maxWidth:950,minHeight:'2.8em',margin:0,color:'#e5dfd5'}}>{subtitleAt(subtitleChunks(clip.caption), progress)}</p>}
+      <h2 style={{color:'#fffaf1',fontFamily:'Georgia, serif',fontWeight:400,fontSize:66,lineHeight:1.03,margin:0,maxWidth:950}}>{clip.name}</h2>
     </div>
     </>}
+    {/* Closed captions: the narration as subtitles, white on a solid box so they read on any picture. */}
+    {captions && !title && !credits && clip.caption && <div data-otio-cc style={{position:'absolute',left:'10%',right:'10%',bottom:42,textAlign:'center'}}>
+      <span style={{background:'rgba(0,0,0,.82)',color:'#fff',font:'500 30px/1.5 Arial, Helvetica, sans-serif',padding:'3px 12px',boxDecorationBreak:'clone',WebkitBoxDecorationBreak:'clone'}}>{subtitleAt(subtitleChunks(clip.caption), progress)}</span>
+    </div>}
     {!credits && clip.credit && <div data-otio-credit style={{position:'absolute',bottom:22,right:36,color:'#e5dfd5',fontSize:15,letterSpacing:1,textShadow:'0 1px 3px rgba(0,0,0,.8)'}}>{clip.credit}</div>}
   </AbsoluteFill>;
 }
