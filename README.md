@@ -46,7 +46,9 @@ MP4 export is not implemented here.
 `fadeInSeconds` and `fadeOutSeconds` (0–10, default 0). These apply a synchronized
 picture-to-black and audio-to-silence envelope across the whole composition,
 including overlays and embedded video sound; seeking recomputes it from frame time. Clip fields: `layout`
-(`editorial` or `lower-third`), `caption`, `eyebrow`, `gain`, `embeddedAudio`, and
+(`editorial` or `lower-third`), `caption`, `eyebrow`, `gain`, `embeddedAudio`, `fadeInSeconds`/`fadeOutSeconds`
+(clip-relative opacity; a fade-in on an upper track overlapping the clip below is a
+crossfade), and
 `motion` (`fromScale`, `toScale`, `fromX`, `toX`, `fromY`, `toY`). Motion positions
 are percentages; scale is 1–3. These are custom renderer hints, not standard OTIO
 features that another editor must reproduce.

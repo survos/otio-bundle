@@ -8,6 +8,7 @@ export type PlaybackClip = {
   id: string; assetId: string; name: string; kind: 'image' | 'audio' | 'video'; url: string;
   startFrame: number; durationFrames: number; sourceStartSeconds: number; layer: number;
   gain: number; muted: boolean; layout: 'editorial' | 'lower-third'; caption: string; eyebrow: string; credit: string;
+  fadeInFrames?: number; fadeOutFrames?: number;
   motion: {fromScale: number; toScale: number; fromX: number; toX: number; fromY: number; toY: number};
 };
 export type Playback = {version: number; title: string; fps: number; width: number; height: number; durationFrames: number; fadeInFrames?: number; fadeOutFrames?: number; clips: PlaybackClip[]};
@@ -19,11 +20,12 @@ function Visual({clip, fps, motion, captions, level}: {clip: PlaybackClip; fps: 
   const scale = motion ? interpolate(progress, [0, 1], [clip.motion.fromScale, clip.motion.toScale]) : 1;
   const x = motion ? interpolate(progress, [0, 1], [clip.motion.fromX, clip.motion.toX]) : 50;
   const y = motion ? interpolate(progress, [0, 1], [clip.motion.fromY, clip.motion.toY]) : 50;
-  const opacity = 1;
+  // Clip-relative fades: an upper layer fading in over the clip below reads as a crossfade.
+  const opacity = fadeLevel(frame, clip.durationFrames, clip.fadeInFrames ?? 0, clip.fadeOutFrames ?? 0);
   const lower = clip.layout === 'lower-third';
   const entrance = motion ? spring({frame: Math.max(0,frame - 8), fps, config:{damping:200}}) : 1;
   const imageStyle: React.CSSProperties = {width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${x}% ${y}%`, transform: `scale(${scale})`, transformOrigin: `${x}% ${y}%`};
-  return <AbsoluteFill style={{background: '#080d12', opacity, overflow: 'hidden'}}>
+  return <AbsoluteFill style={{background: 'transparent', opacity, overflow: 'hidden'}}>
     {clip.kind === 'image'
       ? <Img src={clip.url} style={imageStyle} data-otio-visual={clip.id}/>
       : <Video src={clip.url} preload="metadata" trimBefore={Math.round(clip.sourceStartSeconds * fps)} muted={clip.muted} volume={clip.gain * level} style={imageStyle}/>}

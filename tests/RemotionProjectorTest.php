@@ -44,6 +44,22 @@ final class RemotionProjectorTest extends TestCase
         self::assertSame(30, array_sum(array_column($result['clips'], 'durationFrames')));
     }
 
+    public function testClipFadesAreProjectedInFrames(): void
+    {
+        $clip = $this->item('Clip.1', 0, 90, 30) + ['metadata' => ['survos' => ['fadeInSeconds' => 1, 'fadeOutSeconds' => 0.5]]];
+        $result = (new RemotionProjector())->project($this->timeline([$clip]), $this->resolve(...));
+        self::assertSame(30, $result['clips'][0]['fadeInFrames']);
+        self::assertSame(15, $result['clips'][0]['fadeOutFrames']);
+    }
+
+    public function testClipFadeLongerThanClipIsRejected(): void
+    {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('fadeInSeconds');
+        $clip = $this->item('Clip.1', 0, 30, 30) + ['metadata' => ['survos' => ['fadeInSeconds' => 2]]];
+        (new RemotionProjector())->project($this->timeline([$clip]), $this->resolve(...));
+    }
+
     public function testUnsupportedTransitionIsNotFlattened(): void
     {
         $this->expectException(\DomainException::class);

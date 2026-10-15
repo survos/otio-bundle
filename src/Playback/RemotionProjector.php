@@ -92,6 +92,14 @@ final class RemotionProjector
                 if ($motion['fromScale'] < 1 || $motion['toScale'] < 1 || $motion['fromScale'] > 3 || $motion['toScale'] > 3) {
                     throw new \DomainException("$itemPath: scale outside supported range");
                 }
+                $clipFades = [];
+                foreach (['fadeInSeconds', 'fadeOutSeconds'] as $key) {
+                    $value = $meta[$key] ?? 0;
+                    if (!is_numeric($value) || !is_finite((float) $value) || $value < 0 || $value > $seconds) {
+                        throw new \DomainException("$itemPath: metadata.survos.$key must be between 0 and the clip duration");
+                    }
+                    $clipFades[$key] = (int) round((float) $value * $fps);
+                }
                 $gain = (float) ($meta['gain'] ?? 1);
                 if (!is_finite($gain) || $gain < 0 || $gain > 1) {
                     throw new \DomainException("$itemPath: gain must be between 0 and 1");
@@ -106,6 +114,8 @@ final class RemotionProjector
                     'layout' => ($meta['layout'] ?? 'editorial') === 'lower-third' ? 'lower-third' : 'editorial',
                     'caption' => (string) ($meta['caption'] ?? ''), 'eyebrow' => (string) ($meta['eyebrow'] ?? ''),
                     'credit' => (string) ($media['credit'] ?? ''),
+                    // Clip-relative opacity ramps; an upper layer fading in over the clip below is a crossfade.
+                    'fadeInFrames' => $clipFades['fadeInSeconds'], 'fadeOutFrames' => $clipFades['fadeOutSeconds'],
                 ];
             }
             $duration = max($duration, (int) round($cursor * $fps));
