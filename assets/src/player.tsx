@@ -1,4 +1,5 @@
 import {fadeLevel} from './fade';
+import {subtitleAt, subtitleChunks} from './subtitles';
 import React, {createRef, useEffect} from 'react';
 import {createRoot} from 'react-dom/client';
 import {Player, type PlayerRef} from '@remotion/player';
@@ -62,7 +63,7 @@ function Visual({clip, fps, motion, captions, level}: {clip: PlaybackClip; fps: 
     <div style={{position:'absolute',bottom:96,left:60,right:60,color:'#fffaf1'}}>
       <div style={{width:42,height:3,background:'#d9b071',marginBottom:22}}/>
       <h2 style={{color:'#fffaf1',fontFamily:'Georgia, serif',fontWeight:400,fontSize:66,lineHeight:1.03,margin:'0 0 20px',maxWidth:950}}>{clip.name}</h2>
-      {captions && <p style={{fontSize:25,lineHeight:1.45,maxWidth:950,margin:0,color:'#e5dfd5'}}>{clip.caption}</p>}
+      {captions && <p data-otio-subtitle style={{fontSize:28,lineHeight:1.4,maxWidth:950,minHeight:'2.8em',margin:0,color:'#e5dfd5'}}>{subtitleAt(subtitleChunks(clip.caption), progress)}</p>}
     </div>
     </>}
     {!credits && clip.credit && <div data-otio-credit style={{position:'absolute',bottom:22,right:36,color:'#e5dfd5',fontSize:15,letterSpacing:1,textShadow:'0 1px 3px rgba(0,0,0,.8)'}}>{clip.credit}</div>}
