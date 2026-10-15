@@ -3,7 +3,7 @@ import {subtitleAt, subtitleChunks} from './subtitles';
 import React, {createRef, useEffect} from 'react';
 import {createRoot} from 'react-dom/client';
 import {Player, type PlayerRef} from '@remotion/player';
-import {AbsoluteFill, Img, Sequence, interpolate, spring, Html5Audio as Audio, Html5Video as Video, useCurrentFrame} from 'remotion';
+import {AbsoluteFill, Easing, Img, Sequence, interpolate, Html5Audio as Audio, Html5Video as Video, useCurrentFrame} from 'remotion';
 
 export type PlaybackClip = {
   id: string; assetId: string; name: string; kind: 'image' | 'audio' | 'video'; url: string;
@@ -14,6 +14,15 @@ export type PlaybackClip = {
 };
 export type Playback = {version: number; title: string; fps: number; width: number; height: number; durationFrames: number; fadeInFrames?: number; fadeOutFrames?: number; clips: PlaybackClip[]};
 type CompositionProps = {projection: Playback; motion: boolean; captions: boolean};
+
+const EASE = Easing.bezier(0.65, 0, 0.35, 1);
+/** 0→1→0 envelope: in over [start, start+len], out over [end-len, end] (frames, clip-relative). */
+function wipe(frame: number, start: number, end: number, len = 20): number {
+  if (end - start < 2 * len) return frame >= start && frame < end ? 1 : 0;
+  return interpolate(frame, [start, start + len, end - len, end], [0, 1, 1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: EASE});
+}
+/** A left-to-right crop reveal, the way broadcast lower thirds wipe on and off. */
+const reveal = (amount: number): React.CSSProperties => ({clipPath: `inset(0 ${(1 - amount) * 100}% 0 0)`});
 
 function Visual({clip, fps, motion, captions, level}: {clip: PlaybackClip; fps: number; motion: boolean; captions: boolean; level: number}) {
   const frame = useCurrentFrame();
@@ -26,10 +35,12 @@ function Visual({clip, fps, motion, captions, level}: {clip: PlaybackClip; fps: 
   const lower = clip.layout === 'lower-third';
   const title = clip.layout === 'title';
   const credits = clip.layout === 'credits';
-  const entrance = motion ? spring({frame: Math.max(0,frame - 8), fps, config:{damping:200}}) : 1;
   // A lower third identifies the scene, then gets out of the way (about five seconds).
   const lowerHold = Math.min(clip.durationFrames, Math.round(fps * 5.5));
-  const lowerExit = interpolate(frame, [lowerHold - 12, lowerHold], [1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+  const lowerIn = (delay: number) => wipe(frame, 8 + delay, lowerHold - delay);
+  const lowerOn = lower && frame < lowerHold;
+  // Title card: each element rises in after `seconds`; all clear 1.6s before the clip ends.
+  const titleIn = (seconds: number) => wipe(frame, Math.round(seconds * fps), clip.durationFrames - Math.round(1.6 * fps), Math.round(0.7 * fps));
   const imageStyle: React.CSSProperties = {width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${x}% ${y}%`, transform: `scale(${scale})`, transformOrigin: `${x}% ${y}%`};
   return <AbsoluteFill style={{background: 'transparent', opacity, overflow: 'hidden'}}>
     {clip.kind === 'image'
@@ -50,15 +61,16 @@ function Visual({clip, fps, motion, captions, level}: {clip: PlaybackClip; fps: 
     </div>
     </> : title ? <>
     <AbsoluteFill style={{background:'radial-gradient(ellipse at center, rgba(4,9,15,.55), rgba(4,9,15,.88))', pointerEvents:'none'}}/>
-    <AbsoluteFill data-otio-title style={{alignItems:'center',justifyContent:'center',textAlign:'center',padding:'0 120px',color:'#fffaf1',opacity:entrance,transform:`translateY(${(1-entrance)*20}px)`}}>
-      <div style={{fontSize:18,letterSpacing:5,textTransform:'uppercase',color:'#d9b071',marginBottom:26}}>{clip.eyebrow}</div>
-      <div style={{fontFamily:'Georgia, serif',fontWeight:400,fontSize:84,lineHeight:1.05,color:'#fffaf1'}}>{clip.name}</div>
-      <div style={{width:64,height:3,background:'#d9b071',margin:'30px auto'}}/>
-      {captions && <div style={{fontSize:26,lineHeight:1.45,maxWidth:880,color:'#e5dfd5'}}>{clip.caption}</div>}
+    {/* Staggered entrance; the text clears before the next scene dissolves in. */}
+    <AbsoluteFill data-otio-title style={{alignItems:'center',justifyContent:'center',textAlign:'center',padding:'0 120px',color:'#fffaf1'}}>
+      <div style={{fontSize:18,letterSpacing:5,textTransform:'uppercase',color:'#d9b071',marginBottom:26,opacity:titleIn(0.5),...reveal(titleIn(0.5))}}>{clip.eyebrow}</div>
+      <div style={{fontFamily:'Georgia, serif',fontWeight:400,fontSize:84,lineHeight:1.05,color:'#fffaf1',opacity:titleIn(0.9),transform:`translateY(${(1-titleIn(0.9))*14}px)`}}>{clip.name}</div>
+      <div style={{width:64,height:3,background:'#d9b071',margin:'30px auto',...reveal(titleIn(1.6))}}/>
+      {captions && <div style={{fontSize:26,lineHeight:1.45,maxWidth:880,color:'#e5dfd5',opacity:titleIn(2.0)}}>{clip.caption}</div>}
     </AbsoluteFill>
-    </> : lower ? <div data-otio-lower-third style={{position:'absolute',left:54,bottom:150,maxWidth:900,transform:`translateX(${(1-entrance)*-50}px)`,opacity:entrance*lowerExit,color:'#fffaf1',background:'rgba(12,25,25,.88)',borderLeft:'5px solid #d9b071',padding:'18px 28px'}}>
-      {clip.eyebrow && <div style={{fontSize:16,letterSpacing:3,textTransform:'uppercase',color:'#d9b071',marginBottom:8}}>{clip.eyebrow}</div>}
-      <div style={{fontFamily:'Georgia,serif',fontSize:40,lineHeight:1.1}}>{clip.name}</div>
+    </> : lower ? <div data-otio-lower-third style={{position:'absolute',left:64,bottom:64,display:'flex',flexDirection:'column',alignItems:'flex-start'}}>
+      {clip.eyebrow && <div style={{background:'#d9b071',color:'#14181c',font:'700 17px/1 Arial, Helvetica, sans-serif',letterSpacing:2,padding:'8px 14px',...reveal(lowerIn(4))}}>{clip.eyebrow}</div>}
+      <div style={{background:'rgba(14,18,22,.9)',color:'#fffaf1',fontFamily:'Georgia, serif',fontSize:34,lineHeight:1,padding:'14px 18px',whiteSpace:'nowrap',...reveal(lowerIn(0))}}>{clip.name}</div>
     </div> : <>
     <AbsoluteFill style={{background: 'linear-gradient(180deg, rgba(4,9,15,.18), transparent 36%, rgba(4,9,15,.75))', pointerEvents: 'none'}}/>
     {clip.eyebrow && <div data-otio-eyebrow style={{position:'absolute',top:40,right:48,maxWidth:640,textAlign:'right',color:'#f6ede0',fontSize:18,fontWeight:600,letterSpacing:2,textShadow:'0 1px 4px rgba(0,0,0,.85)'}}>{clip.eyebrow}</div>}
@@ -68,7 +80,8 @@ function Visual({clip, fps, motion, captions, level}: {clip: PlaybackClip; fps: 
     </div>
     </>}
     {/* Closed captions: the narration as subtitles, white on a solid box so they read on any picture. */}
-    {captions && !title && !credits && clip.caption && <div data-otio-cc style={{position:'absolute',left:'10%',right:'10%',bottom:42,textAlign:'center'}}>
+    {/* While a lower third is up, captions move to the top of the frame, as broadcasters do. */}
+    {captions && !title && !credits && clip.caption && <div data-otio-cc style={{position:'absolute',left:'10%',right:'10%',...(lowerOn ? {top:36} : {bottom:36}),textAlign:'center'}}>
       <span style={{background:'rgba(0,0,0,.82)',color:'#fff',font:'500 30px/1.5 Arial, Helvetica, sans-serif',padding:'3px 12px',boxDecorationBreak:'clone',WebkitBoxDecorationBreak:'clone'}}>{subtitleAt(subtitleChunks(clip.caption), progress)}</span>
     </div>}
     {!credits && clip.credit && <div data-otio-credit style={{position:'absolute',bottom:22,right:36,color:'#e5dfd5',fontSize:15,letterSpacing:1,textShadow:'0 1px 3px rgba(0,0,0,.8)'}}>{clip.credit}</div>}
