@@ -4,12 +4,9 @@ Symfony integration that converts OTIO documents into a Remotion browser preview
 The standalone `survos/otio` package owns OTIO classes; this bundle owns playback.
 
 ```bash
-composer require survos/otio-bundle survos/otio:dev-main
+composer require survos/otio-bundle
 ```
 
-The current implementation is in mono development sources; the published 2.36.5
-release is the original scaffold. Link the consumer with `php ../mono/link .`
-until the next release publishes these changes.
 
 The bundle ships a prebuilt ESM player containing React and Remotion. Consumers
 use Symfony AssetMapper, without adding a React build to their application:
