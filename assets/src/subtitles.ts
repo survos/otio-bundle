@@ -3,13 +3,14 @@
  * for its share of the clip by word count, so a paragraph never fills the frame at once.
  */
 // Initials ("A. A. Broadie") don't end a sentence.
-export function subtitleChunks(text: string, maxWords = 14): string[] {
+export function subtitleChunks(text: string, maxWords = 14, minWords = 4): string[] {
   const chunks: string[] = [];
   for (const sentence of text.trim().split(/(?<=[.!?…])(?<!\b[A-Z]\.)\s+/u).filter(Boolean)) {
     let current: string[] = [];
     for (const piece of sentence.split(/(?<=[,;:—])\s+/u)) {
       const words = piece.split(/\s+/u).filter(Boolean);
-      if (current.length && current.length + words.length > maxWords) {
+      // A short clause ("Inside,") rides with the next one rather than flashing up alone.
+      if (current.length >= minWords && current.length + words.length > maxWords) {
         chunks.push(current.join(' '));
         current = [];
       }

@@ -13,10 +13,13 @@
         "php": "^8.5",
         "survos/kit-bundle": "^2.36",
         "survos/otio": "^2.41.9",
-        "symfony/config": "^8.1",
-        "symfony/dependency-injection": "^8.1",
-        "symfony/http-kernel": "^8.1",
         "symfony/asset-mapper": "^8.1",
+        "symfony/config": "^8.1",
+        "symfony/console": "^8.1",
+        "symfony/dependency-injection": "^8.1",
+        "symfony/filesystem": "^8.1",
+        "symfony/http-kernel": "^8.1",
+        "symfony/process": "^8.1",
         "symfony/stimulus-bundle": "^3.3"
     },
     "autoload": {

@@ -55,6 +55,20 @@ The player exposes play, pause, seekTo, getCurrentFrame, setMotion, setCaptions,
 and unmount; it emits otio:frame, otio:play, otio:pause and otio:captions DOM events.
 The control bar has a CC button that toggles the captions (also in fullscreen).
 
+## Rendering to MP4
+
+`Survos\OtioBundle\Render\RemotionRenderer` (and `bin/console otio:render <playback.json>
+<out.mp4>`) render a playback projection with the same composition the browser player mounts,
+through Remotion's renderer in Node (`assets/render.mjs`). It is optional tooling for a workstation,
+not a web dependency: it needs Node.js and the render packages (`npm ci --prefix
+vendor/survos/otio-bundle/assets`); `unavailable()` reports what is missing instead of failing mid-run.
+
+- Captions are off by default (publish them as a caption track); `--captions` burns them in.
+- `--scale=1.5` turns a 1280×720 composition into 1920×1080; `--still=<file.jpg>` also renders a
+  thumbnail frame.
+- On macOS the installed Google Chrome is used: Remotion's downloaded headless shell crashes on
+  macOS 27. Override with `--browser=<path>` or `REMOTION_BROWSER`.
+
 ## Development
 
 ```bash

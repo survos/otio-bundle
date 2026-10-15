@@ -18,3 +18,7 @@ test('the shown chunk follows progress through the clip', () => {
 test('initials do not end a sentence', () => {
   assert.deepEqual(subtitleChunks('Around 1900, druggist A. A. Broadie built his drugstore.'), ['Around 1900, druggist A. A. Broadie built his drugstore.']);
 });
+test('a short clause rides with the next one', () => {
+  const chunks = subtitleChunks('Inside, Mayor Thomas Doyle faced more than 1,400 seats and opened the newest stage with Fashion, a comedy.');
+  assert.ok(!chunks.includes('Inside,'), chunks.join(' | '));
+});
