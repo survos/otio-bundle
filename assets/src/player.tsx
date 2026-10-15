@@ -58,7 +58,7 @@ function Visual({clip, fps, motion, captions, level}: {clip: PlaybackClip; fps: 
       {captions && <div style={{fontSize:20,marginTop:12,lineHeight:1.4}}>{clip.caption}</div>}
     </div> : <>
     <AbsoluteFill style={{background: 'linear-gradient(180deg, rgba(4,9,15,.18), transparent 36%, rgba(4,9,15,.9))', pointerEvents: 'none'}}/>
-    <div style={{position:'absolute',top:48,left:60,color:'#f6ede0',fontSize:19,fontWeight:600,letterSpacing:4,textTransform:'uppercase'}}>{clip.eyebrow}</div>
+    {clip.eyebrow && <div data-otio-eyebrow style={{position:'absolute',top:40,right:48,maxWidth:640,textAlign:'right',color:'#f6ede0',fontSize:18,fontWeight:600,letterSpacing:2,textShadow:'0 1px 4px rgba(0,0,0,.85)'}}>{clip.eyebrow}</div>}
     <div style={{position:'absolute',bottom:96,left:60,right:60,color:'#fffaf1'}}>
       <div style={{width:42,height:3,background:'#d9b071',marginBottom:22}}/>
       <h2 style={{color:'#fffaf1',fontFamily:'Georgia, serif',fontWeight:400,fontSize:66,lineHeight:1.03,margin:'0 0 20px',maxWidth:950}}>{clip.name}</h2>
