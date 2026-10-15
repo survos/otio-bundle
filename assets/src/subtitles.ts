@@ -2,9 +2,10 @@
  * Narration as subtitles: short chunks (sentences, split at clause breaks when long), each shown
  * for its share of the clip by word count, so a paragraph never fills the frame at once.
  */
+// Initials ("A. A. Broadie") don't end a sentence.
 export function subtitleChunks(text: string, maxWords = 14): string[] {
   const chunks: string[] = [];
-  for (const sentence of text.trim().split(/(?<=[.!?…])\s+/u).filter(Boolean)) {
+  for (const sentence of text.trim().split(/(?<=[.!?…])(?<!\b[A-Z]\.)\s+/u).filter(Boolean)) {
     let current: string[] = [];
     for (const piece of sentence.split(/(?<=[,;:—])\s+/u)) {
       const words = piece.split(/\s+/u).filter(Boolean);

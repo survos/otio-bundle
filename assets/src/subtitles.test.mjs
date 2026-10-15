@@ -15,3 +15,6 @@ test('the shown chunk follows progress through the clip', () => {
   assert.equal(subtitleAt(chunks, 0.99), 'Second part.');
   assert.equal(subtitleAt([], 0.5), '');
 });
+test('initials do not end a sentence', () => {
+  assert.deepEqual(subtitleChunks('Around 1900, druggist A. A. Broadie built his drugstore.'), ['Around 1900, druggist A. A. Broadie built his drugstore.']);
+});

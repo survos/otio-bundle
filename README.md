@@ -55,7 +55,8 @@ are percentages; scale is 1–3. These are custom renderer hints, not standard O
 features that another editor must reproduce.
 
 The player exposes play, pause, seekTo, getCurrentFrame, setMotion, setCaptions,
-and unmount; it emits otio:frame, otio:play and otio:pause DOM events.
+and unmount; it emits otio:frame, otio:play, otio:pause and otio:captions DOM events.
+The control bar has a CC button that toggles the captions (also in fullscreen).
 
 ## Development
 
