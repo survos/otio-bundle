@@ -111,7 +111,7 @@ final class RemotionProjector
                     'sourceStartSeconds' => $trim, 'motion' => $motion, 'gain' => $gain,
                     // Embedded video sound is opt-in; audio tracks own sound by default.
                     'muted' => 'video' === $media['kind'] && !($meta['embeddedAudio'] ?? false),
-                    'layout' => ($meta['layout'] ?? 'editorial') === 'lower-third' ? 'lower-third' : 'editorial',
+                    'layout' => \in_array($meta['layout'] ?? null, ['lower-third', 'title', 'credits'], true) ? $meta['layout'] : 'editorial',
                     'caption' => (string) ($meta['caption'] ?? ''), 'eyebrow' => (string) ($meta['eyebrow'] ?? ''),
                     'credit' => (string) ($media['credit'] ?? ''),
                     // Clip-relative opacity ramps; an upper layer fading in over the clip below is a crossfade.

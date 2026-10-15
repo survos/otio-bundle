@@ -7,7 +7,7 @@ import {AbsoluteFill, Img, Sequence, interpolate, spring, Html5Audio as Audio, H
 export type PlaybackClip = {
   id: string; assetId: string; name: string; kind: 'image' | 'audio' | 'video'; url: string;
   startFrame: number; durationFrames: number; sourceStartSeconds: number; layer: number;
-  gain: number; muted: boolean; layout: 'editorial' | 'lower-third'; caption: string; eyebrow: string; credit: string;
+  gain: number; muted: boolean; layout: 'editorial' | 'lower-third' | 'title' | 'credits'; caption: string; eyebrow: string; credit: string;
   fadeInFrames?: number; fadeOutFrames?: number;
   motion: {fromScale: number; toScale: number; fromX: number; toX: number; fromY: number; toY: number};
 };
@@ -23,26 +23,49 @@ function Visual({clip, fps, motion, captions, level}: {clip: PlaybackClip; fps: 
   // Clip-relative fades: an upper layer fading in over the clip below reads as a crossfade.
   const opacity = fadeLevel(frame, clip.durationFrames, clip.fadeInFrames ?? 0, clip.fadeOutFrames ?? 0);
   const lower = clip.layout === 'lower-third';
+  const title = clip.layout === 'title';
+  const credits = clip.layout === 'credits';
   const entrance = motion ? spring({frame: Math.max(0,frame - 8), fps, config:{damping:200}}) : 1;
   const imageStyle: React.CSSProperties = {width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${x}% ${y}%`, transform: `scale(${scale})`, transformOrigin: `${x}% ${y}%`};
   return <AbsoluteFill style={{background: 'transparent', opacity, overflow: 'hidden'}}>
     {clip.kind === 'image'
       ? <Img src={clip.url} style={imageStyle} data-otio-visual={clip.id}/>
       : <Video src={clip.url} preload="metadata" trimBefore={Math.round(clip.sourceStartSeconds * fps)} muted={clip.muted} volume={clip.gain * level} style={imageStyle}/>}
-    {lower ? <div data-otio-lower-third style={{position:'absolute',left:54,bottom:64,maxWidth:900,transform:`translateX(${(1-entrance)*-50}px)`,opacity:entrance,color:'#fffaf1',background:'rgba(12,25,25,.88)',borderLeft:'5px solid #d9b071',padding:'22px 30px'}}>
+    {credits ? <>
+    <AbsoluteFill style={{background:'rgba(4,9,15,.86)', pointerEvents:'none'}}/>
+    <div data-otio-credits style={{position:'absolute',left:0,right:0,top:`${(1-progress)*100}%`,transform:`translateY(-${progress*100}%)`,textAlign:'center',color:'#fffaf1'}}>
+      <div style={{fontSize:16,letterSpacing:4,textTransform:'uppercase',color:'#d9b071'}}>{clip.eyebrow}</div>
+      <div style={{fontFamily:'Georgia, serif',fontSize:56,margin:'14px 0 60px'}}>{clip.name}</div>
+      {clip.caption.split(/\n\s*\n/).map((section, i) => {
+        const [heading, ...lines] = section.split('\n');
+        return <div key={i} style={{marginBottom:56}}>
+          <div style={{fontSize:16,letterSpacing:4,textTransform:'uppercase',color:'#d9b071',marginBottom:16}}>{heading}</div>
+          {lines.map((line, j) => <div key={j} style={{fontSize:24,lineHeight:1.6,color:'#e5dfd5'}}>{line}</div>)}
+        </div>;
+      })}
+    </div>
+    </> : title ? <>
+    <AbsoluteFill style={{background:'radial-gradient(ellipse at center, rgba(4,9,15,.55), rgba(4,9,15,.88))', pointerEvents:'none'}}/>
+    <AbsoluteFill data-otio-title style={{alignItems:'center',justifyContent:'center',textAlign:'center',padding:'0 120px',color:'#fffaf1',opacity:entrance,transform:`translateY(${(1-entrance)*20}px)`}}>
+      <div style={{fontSize:18,letterSpacing:5,textTransform:'uppercase',color:'#d9b071',marginBottom:26}}>{clip.eyebrow}</div>
+      <div style={{fontFamily:'Georgia, serif',fontWeight:400,fontSize:84,lineHeight:1.05,color:'#fffaf1'}}>{clip.name}</div>
+      <div style={{width:64,height:3,background:'#d9b071',margin:'30px auto'}}/>
+      {captions && <div style={{fontSize:26,lineHeight:1.45,maxWidth:880,color:'#e5dfd5'}}>{clip.caption}</div>}
+    </AbsoluteFill>
+    </> : lower ? <div data-otio-lower-third style={{position:'absolute',left:54,bottom:64,maxWidth:900,transform:`translateX(${(1-entrance)*-50}px)`,opacity:entrance,color:'#fffaf1',background:'rgba(12,25,25,.88)',borderLeft:'5px solid #d9b071',padding:'22px 30px'}}>
       <div style={{fontSize:16,letterSpacing:3,textTransform:'uppercase',color:'#d9b071',marginBottom:10}}>{clip.eyebrow}</div>
       <div style={{fontFamily:'Georgia,serif',fontSize:42,lineHeight:1.1}}>{clip.name}</div>
       {captions && <div style={{fontSize:20,marginTop:12,lineHeight:1.4}}>{clip.caption}</div>}
     </div> : <>
     <AbsoluteFill style={{background: 'linear-gradient(180deg, rgba(4,9,15,.18), transparent 36%, rgba(4,9,15,.9))', pointerEvents: 'none'}}/>
     <div style={{position:'absolute',top:48,left:60,color:'#f6ede0',fontSize:19,fontWeight:600,letterSpacing:4,textTransform:'uppercase'}}>{clip.eyebrow}</div>
-    <div style={{position:'absolute',bottom:70,left:60,right:60,color:'#fffaf1'}}>
+    <div style={{position:'absolute',bottom:96,left:60,right:60,color:'#fffaf1'}}>
       <div style={{width:42,height:3,background:'#d9b071',marginBottom:22}}/>
-      <h2 style={{fontFamily:'Georgia, serif',fontWeight:400,fontSize:66,lineHeight:1.03,margin:'0 0 20px',maxWidth:950}}>{clip.name}</h2>
+      <h2 style={{color:'#fffaf1',fontFamily:'Georgia, serif',fontWeight:400,fontSize:66,lineHeight:1.03,margin:'0 0 20px',maxWidth:950}}>{clip.name}</h2>
       {captions && <p style={{fontSize:25,lineHeight:1.45,maxWidth:950,margin:0,color:'#e5dfd5'}}>{clip.caption}</p>}
     </div>
     </>}
-    <div style={{position:'absolute',bottom:24,right:40,color:'#c7c0b5',fontSize:14,letterSpacing:1}}>{clip.credit}</div>
+    {!credits && clip.credit && <div data-otio-credit style={{position:'absolute',bottom:22,right:36,color:'#e5dfd5',fontSize:15,letterSpacing:1,textShadow:'0 1px 3px rgba(0,0,0,.8)'}}>{clip.credit}</div>}
   </AbsoluteFill>;
 }
 
