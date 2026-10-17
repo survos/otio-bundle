@@ -2,3 +2,4 @@
 /composer.lock
 /.phpunit.cache/
 /assets/node_modules/
+/node_modules/
